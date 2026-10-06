@@ -531,27 +531,27 @@ else:
 
         max_count = character_counts.max()
 
-for character, count in character_counts.items():
+        for character, count in character_counts.items():
 
-    image = get_character_image(character)
+            image = get_character_image(character)
 
-    width = (
-        count / max_count * 100
-        if max_count
-        else 0
-    )
+            width = (
+                count / max_count * 100
+                if max_count
+                else 0
+            )
 
-    if image:
-        picture_html = (
-            f'<img src="{image}" '
-            f'class="character-image">'
-        )
-    else:
-        picture_html = (
-            '<div class="character-placeholder">?</div>'
-        )
+            if image:
+                picture_html = (
+                    f'<img src="{image}" '
+                    f'class="character-image">'
+                )
+            else:
+                picture_html = (
+                    '<div class="character-placeholder">?</div>'
+                )
 
-    character_html = f"""
+            character_html = f"""
 <div class="character-row">
 <div class="character-picture">{picture_html}</div>
 <div class="character-content">
@@ -564,7 +564,7 @@ for character, count in character_counts.items():
 </div>
 """
 
-    st.markdown(
-        character_html,
-        unsafe_allow_html=True,
-    )
+            st.markdown(
+                character_html,
+                unsafe_allow_html=True,
+            )
