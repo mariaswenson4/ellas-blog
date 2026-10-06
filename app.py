@@ -13,7 +13,7 @@ st.logo(str(LOGO_PATH))
 
 pages = {
     "": [
-        st.Page("pages/home.py", title="Home", icon="material:home"),
+        st.Page("pages/home.py", title="Home", icon=":material/home:"),
     ],
     "For My Girlfriend": [
         st.Page("pages/southpark.py", title="South Park"),
