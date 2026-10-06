@@ -17,7 +17,7 @@ pages = {
     "": [
         st.Page("pages/home.py", title="Home", icon=":material/home:"),
     ],
-    "For My Girlfriend": [
+    "All the Features for Ella": [
         st.Page("pages/southpark.py", title="South Park"),
         st.Page("pages/twilight.py", title="Twilight Audiobook"),
         st.Page("pages/blog.py", title="Blog"),
