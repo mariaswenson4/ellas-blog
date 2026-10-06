@@ -24,12 +24,12 @@ WELCOME TO
 
 <div class="home-title">
 Ella's Super Hot<br>
-Fantastic Blog
+& Fantastic Blog
 </div>
 
 <div class="home-subtitle">
-A highly unnecessary corner of the internet made by Maria,
-for one very specific woman.
+A SUPER special place on the internet, made with love and care, 
+just for my beautiful girlfriend.
 </div>
 
 </div>
@@ -45,7 +45,7 @@ for one very specific woman.
 st.markdown(
     """
 <div class="home-section-title">
-CHOOSE YOUR ADVENTURE
+DIFFERENT WEBSITE FEATURES
 </div>
 """,
     unsafe_allow_html=True,
@@ -64,11 +64,11 @@ with southpark_col:
     st.markdown(
         """
 <div class="home-card">
-<div class="home-card-small">IMPORTANT RESEARCH</div>
+<div class="home-card-small">RANKINGS</div>
 <div class="home-card-title">South Park</div>
 <div class="home-card-description">
-An extremely serious and academically rigorous ranking
-of every South Park episode.
+An extremely thourough ranking and rating of each South Park
+episode, that was done with a lot of care and attention to detail.
 </div>
 </div>
 """,
@@ -76,7 +76,7 @@ of every South Park episode.
     )
 
     if st.button(
-        "View Rankings →",
+        "View Episode Ranking →",
         key="southpark_home",
         use_container_width=True,
     ):
@@ -88,11 +88,11 @@ with twilight_col:
     st.markdown(
         """
 <div class="home-card">
-<div class="home-card-small">NOW LISTENING</div>
-<div class="home-card-title">Twilight</div>
+<div class="home-card-small">AUDIOBOOK</div>
+<div class="home-card-title">Twilight #1</div>
 <div class="home-card-description">
-The critically acclaimed and completely unauthorized
-Maria's Version audiobook experience.
+The super seriously read audiobook for Ella. 
+Currently on the first book, but will eventually include all four books in the series.
 </div>
 </div>
 """,
@@ -100,7 +100,7 @@ Maria's Version audiobook experience.
     )
 
     if st.button(
-        "Listen →",
+        "Listen to my voice →",
         key="twilight_home",
         use_container_width=True,
     ):
@@ -112,11 +112,11 @@ with blog_col:
     st.markdown(
         """
 <div class="home-card">
-<div class="home-card-small">FROM THE DESK OF MARIA</div>
-<div class="home-card-title">The Blog</div>
+<div class="home-card-small">FROM MARIA'S BEAUTIFUL MIND</div>
+<div class="home-card-title">The Blog Portion</div>
 <div class="home-card-description">
-Thoughts, observations, important announcements,
-and other things you definitely needed to know.
+Things that I think about, things that I do, and things that I want to share with you...
+Which is basically everything that I do... 
 </div>
 </div>
 """,
@@ -138,7 +138,7 @@ and other things you definitely needed to know.
 st.markdown(
     """
 <div class="home-footer">
-Made with an unreasonable amount of Python for one specific woman. ♡
+Made with an with love & coding for Ella <3 
 </div>
 """,
     unsafe_allow_html=True,
