@@ -180,7 +180,7 @@ if st.session_state.selection is not None:
         favorite_character = "—"
 
     if pd.isna(comments):
-        comments = "No thoughts yet!"
+        comments = "Nothing to give yet!"
 
     if pd.isna(rewatch):
         rewatch = "—"
