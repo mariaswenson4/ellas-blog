@@ -9,3 +9,18 @@ st.set_page_config(
     page_icon=str(LOGO_PATH),
     layout="wide",
 )
+st.logo(str(LOGO_PATH))
+
+pages = {
+    "": [
+        st.Page("pages/home.py", title="Home", icon="material:home"),
+    ],
+    "For My Girlfriend": [
+        st.Page("pages/southpark.py", title="South Park"),
+        st.Page("pages/twilight.py", title="Twilight Audiobook"),
+        st.Page("pages/blog.py", title="Blog"),
+    ],
+}
+
+pg = st.navigation(pages)
+pg.run()
