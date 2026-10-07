@@ -76,10 +76,11 @@ def apply_home_styles():
         ),
         url("{background}");
 
-    background-size: cover;
-    background-position: center;
+    background-size: 100% auto;
+    background-position: top center;
     background-repeat: no-repeat;
-    background-attachment: fixed;
+    background-attachment: scroll;
+    background-color: #17101f;
 }}
 
 
@@ -89,7 +90,7 @@ def apply_home_styles():
 
 [data-testid="stMainBlockContainer"] {{
     max-width: 1200px;
-    padding-top: 3rem;
+    padding-top: 0.5rem;
     padding-bottom: 4rem;
 }}
 
@@ -104,7 +105,7 @@ def apply_home_styles():
     max-width: 850px;
 
     margin:
-        20px auto
+        50px auto
         65px auto;
 
     padding:
