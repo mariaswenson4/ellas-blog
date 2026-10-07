@@ -145,6 +145,27 @@ st.markdown(
 </div>
 </div>
 </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 Made with an with love & coding for Ella <3 
 </div>
 """,
