@@ -138,6 +138,13 @@ Which is basically everything that I do...
 st.markdown(
     """
 <div class="home-footer">
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 Made with an with love & coding for Ella <3 
 </div>
 """,
