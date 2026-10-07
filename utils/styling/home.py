@@ -2,8 +2,7 @@ from pathlib import Path
 import base64
 
 import streamlit as st
-
-
+from utils.styling.base import apply_base_styles
 # =============================================================================
 # IMAGE HELPER
 # =============================================================================
@@ -40,6 +39,8 @@ def _image_to_base64(image_path: str) -> str:
 # HOME STYLES
 # =============================================================================
 def apply_home_styles():
+
+    apply_base_styles()
 
     project_root = (
         Path(__file__)
