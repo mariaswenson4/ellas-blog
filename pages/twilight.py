@@ -3,13 +3,25 @@ from pathlib import Path
 import streamlit as st
 
 from utils.styling.twilight import apply_twilight_styles
-
+from utils.styling.backgroundhelper import render_background
+from utils.styling.headers import apply_header_styles
+from utils.styling.components.headers import render_page_header
+from utils.styling.components.html import render_html
+# =============================================================================
+# PAGE STYLING
+# =============================================================================
 
 # =============================================================================
 # PAGE STYLING
 # =============================================================================
 
+apply_header_styles()
 apply_twilight_styles()
+
+render_background(
+    image_name="twilightbackground.jpg",
+    overlay=0.65,
+)
 
 # =============================================================================
 # CHAPTERS
@@ -58,17 +70,23 @@ AUDIO_FOLDER = (
 # HEADER
 # =============================================================================
 
-st.markdown(
-    """
-<div class="twilight-header">
-<div class="twilight-eyebrow">Maria's Version of Twilight as an Audiobook</div>
-<div class="twilight-title">Twilight</div>
-<div class="twilight-subtitle">Read specifically to my hot girlfriend with the utmost enjoyment and pleasure for all first time listeners.</div>
-</div>
-""",
-    unsafe_allow_html=True,
-)
+# =============================================================================
+# HEADER
+# =============================================================================
 
+# =============================================================================
+# HEADER
+# =============================================================================
+
+render_page_header(
+    title="Twilight",
+    eyebrow="Maria's Version of Twilight as an Audiobook",
+    subtitle=(
+        "Read specifically to my hot girlfriend with the utmost "
+        "enjoyment and pleasure for all first time listeners."
+    ),
+    theme="twilight",
+)
 # =============================================================================
 # FIND AUDIO FILES
 # =============================================================================
@@ -128,15 +146,18 @@ Not recorded yet
     # Chapter Card
     # -------------------------------------------------------------------------
 
-    st.markdown(
+    render_html(
         f"""
-<div class="{card_class}">
-<div class="chapter-number">CHAPTER {chapter_number:02d}</div>
-<div class="chapter-title">{chapter_title}</div>
-{status}
-</div>
-""",
-        unsafe_allow_html=True,
+        <div class="{card_class}">
+            <div class="chapter-number">
+                CHAPTER {chapter_number:02d}
+            </div>
+            <div class="chapter-title">
+                {chapter_title}
+            </div>
+            {status}
+        </div>
+        """
     )
 
     # -------------------------------------------------------------------------

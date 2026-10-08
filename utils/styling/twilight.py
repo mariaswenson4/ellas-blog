@@ -1,341 +1,230 @@
-from pathlib import Path
-import base64
 
 import streamlit as st
 
 
 # =============================================================================
-# IMAGE HELPER
-# =============================================================================
-
-def _image_to_base64(image_path: str) -> str:
-    """Convert an image to a base64 data URI."""
-
-    path = Path(image_path)
-
-    if not path.exists():
-        return ""
-
-    suffix = path.suffix.lower()
-
-    mime_types = {
-        ".png": "image/png",
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".webp": "image/webp",
-    }
-
-    mime_type = mime_types.get(
-        suffix,
-        "image/jpeg",
-    )
-
-    encoded = base64.b64encode(
-        path.read_bytes()
-    ).decode("utf-8")
-
-    return f"data:{mime_type};base64,{encoded}"
-
-
-# =============================================================================
-# TWILIGHT STYLES
+# TWILIGHT PAGE STYLING
 # =============================================================================
 
 def apply_twilight_styles():
+    """
+    Apply Twilight-specific styling.
 
-    background = _image_to_base64(
-        "images/twilightbackground.jpg"
-        
-    )
+    Background images are handled separately by render_background().
+    Headers use the shared render_page_header() component.
+    """
 
     st.markdown(
-        f"""
-<style>
+        """
+        <style>
 
-/* =========================================================
-   PAGE BACKGROUND
+        /* =========================================================
+           PAGE LAYOUT
+           ========================================================= */
+
+        .stApp {
+            color: #f1eee6;
+        }
+
+        .block-container {
+            max-width: 900px;
+            padding-top: 4rem;
+            padding-bottom: 6rem;
+        }
+
+
+        /* =========================================================
+   TWILIGHT HEADER THEME
    ========================================================= */
 
-.stApp {{
-    background-image:
-        linear-gradient(
-            rgba(5, 10, 8, 0.50),
-            rgba(5, 10, 8, 0.72)
-        ),
-        url("{background}");
+        .site-page-header.theme-twilight {
+            text-align: center !important;
+            margin: 20px auto 60px !important;
+        }
+
+        .site-page-header.theme-twilight .site-header-eyebrow {
+            font-size: 0.75rem !important;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: #c1cbc4 !important;
+            margin-bottom: 12px;
+        }
+
+        .site-page-header.theme-twilight .site-header-title {
+            font-family: Georgia, serif !important;
+            font-size: 5rem !important;
+            font-weight: 400 !important;
+            letter-spacing: 5px;
+            line-height: 1.1;
+            color: #ffffff !important;
+            margin-bottom: 18px;
+        }
+
+        .site-page-header.theme-twilight .site-header-subtitle {
+            max-width: 550px;
+            margin: 0 auto;
+            font-family: Georgia, serif !important;
+            font-size: 1rem !important;
+            font-style: italic !important;
+            line-height: 1.6;
+            color: #d3dad5 !important;
+        }
+
+        @media (max-width: 800px) {
+            .site-page-header.theme-twilight .site-header-title {
+                font-size: 3.4rem !important;
+            }
+        }
+
+        /* =========================================================
+           CHAPTER CARDS
+           ========================================================= */
+
+        .chapter-card {
+            background: rgba(8, 15, 14, 0.72);
 
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-left: 4px solid rgba(140, 29, 36, 0.90);
+            border-radius: 12px;
 
-    color: #f1eee6;
-}}
+            padding: 18px 22px;
 
+            margin-top: 18px;
+            margin-bottom: 10px;
 
-.block-container {{
-    max-width: 900px;
+            backdrop-filter: blur(7px);
+            -webkit-backdrop-filter: blur(7px);
 
-    padding-top: 4rem;
-    padding-bottom: 6rem;
-}}
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
 
+            transition:
+                background 0.2s ease,
+                transform 0.2s ease;
+        }
 
-/* =========================================================
-   HEADER
-   ========================================================= */
+        .chapter-card:hover {
+            background: rgba(8, 15, 14, 0.82);
+            transform: translateY(-2px);
+        }
 
-.twilight-header {{
-    text-align: center;
 
-    margin-bottom: 60px;
-}}
+        /* =========================================================
+           CHAPTER INFORMATION
+           ========================================================= */
 
+        .chapter-number {
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 3px;
 
-.twilight-eyebrow {{
-    font-size: 0.75rem;
-    font-weight: 700;
+            color: #aebbb2;
 
-    letter-spacing: 4px;
+            margin-bottom: 5px;
+        }
 
-    color: #c1cbc4;
+        .chapter-title {
+            font-family: Georgia, serif;
+            font-size: 1.4rem;
+            font-weight: 600;
 
-    margin-bottom: 12px;
-}}
+            color: #ffffff;
 
+            margin-bottom: 6px;
 
-.twilight-title {{
-    font-family: Georgia, serif;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.50);
+        }
 
-    font-size: 5rem;
-    font-weight: 400;
+        .chapter-status {
+            font-family: Georgia, serif;
+            font-size: 0.82rem;
+            font-style: italic;
 
-    letter-spacing: 5px;
+            color: rgba(255, 255, 255, 0.55);
+        }
 
-    color: #ffffff;
 
-    line-height: 1;
-}}
+        /* =========================================================
+           RECORDED CHAPTERS
+           ========================================================= */
 
+        .chapter-card-recorded {
+            margin-bottom: 0;
+            padding-bottom: 16px;
 
-.twilight-subtitle {{
-    max-width: 550px;
+            border-radius: 12px 12px 0 0;
+            border-bottom: none;
+        }
 
-    margin: 18px auto 0 auto;
 
-    font-family: Georgia, serif;
+        /* =========================================================
+           AUDIO PLAYERS
+           ========================================================= */
 
-    font-size: 1rem;
-    font-style: italic;
+        [data-testid="stAudio"] {
+            margin-top: -1px;
+            margin-bottom: 25px;
+        }
 
-    line-height: 1.6;
+        [data-testid="stAudio"] audio {
+            width: 100%;
+            border-radius: 0 0 12px 12px;
+            background: rgba(8, 15, 14, 0.82);
+        }
 
-    color: #d3dad5;
-}}
 
+        /* =========================================================
+           EMPTY STATE
+           ========================================================= */
 
-/* =========================================================
-   CHAPTERS
-   ========================================================= */
+        .twilight-empty {
+            text-align: center;
+            padding: 40px;
 
-.chapter-heading {{
-    margin-top: 35px;
-    margin-bottom: 10px;
+            background: rgba(10, 15, 12, 0.78);
 
-    padding: 20px 22px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
 
-    background: rgba(10, 15, 12, 0.82);
+            color: #d0d8d2;
 
-    border: 1px solid rgba(255, 255, 255, 0.15);
+            font-family: Georgia, serif;
+            font-style: italic;
 
-    border-left: 4px solid #8c1d24;
+            backdrop-filter: blur(6px);
+        }
 
-    border-radius: 0 10px 10px 0;
 
-    backdrop-filter: blur(6px);
-}}
-.chapter-card {{
-    background: rgba(8, 15, 14, 0.72);
+        /* =========================================================
+           MOBILE RESPONSIVENESS
+           ========================================================= */
 
-    border: 1px solid rgba(255, 255, 255, 0.18);
+        @media (max-width: 800px) {
 
-    border-left: 4px solid rgba(140, 29, 36, 0.90);
+            .theme-twilight .site-header-title {
+                font-size: 3.4rem;
+            }
 
-    border-radius: 12px;
+            .theme-twilight .site-header-eyebrow {
+                font-size: 0.65rem;
+                letter-spacing: 2px;
+            }
 
-    padding: 18px 22px;
+            .theme-twilight .site-header-subtitle {
+                font-size: 0.9rem;
+                padding: 0 15px;
+            }
 
-    margin-top: 18px;
-    margin-bottom: 10px;
+            .chapter-card {
+                padding: 16px 18px;
+            }
 
-    backdrop-filter: blur(7px);
-    -webkit-backdrop-filter: blur(7px);
+            .chapter-title {
+                font-size: 1.25rem;
+            }
 
-    box-shadow:
-        0 6px 20px rgba(0, 0, 0, 0.22);
+        }
 
-    transition:
-        background 0.2s ease,
-        transform 0.2s ease;
-}}
-
-
-.chapter-card:hover {{
-    background: rgba(8, 15, 14, 0.82);
-
-    transform: translateY(-2px);
-}}
-
-
-.chapter-number {{
-    font-size: 0.68rem;
-
-    font-weight: 800;
-
-    letter-spacing: 4px;
-
-    color: rgba(255, 255, 255, 0.70);
-
-    margin-bottom: 6px;
-}}
-
-
-.chapter-title {{
-    font-family: Georgia, serif;
-
-    font-size: 1.45rem;
-
-    font-weight: 600;
-
-    color: #ffffff;
-
-    margin-bottom: 6px;
-
-    text-shadow:
-        0 2px 5px rgba(0, 0, 0, 0.50);
-}}
-
-
-.chapter-status {{
-    font-family: Georgia, serif;
-
-    font-size: 0.82rem;
-
-    font-style: italic;
-
-    color: rgba(255, 255, 255, 0.55);
-}}
-
-
-.chapter-status.recorded {{
-    color: #c4d6ca;
-
-    font-family: inherit;
-
-    font-style: normal;
-
-    font-size: 0.65rem;
-
-    font-weight: 800;
-
-    letter-spacing: 2px;
-}}
-
-.chapter-number {{
-    font-size: 0.7rem;
-    font-weight: 800;
-
-    letter-spacing: 3px;
-
-    color: #aebbb2;
-
-    margin-bottom: 5px;
-}}
-
-
-.chapter-title {{
-    font-family: Georgia, serif;
-
-    font-size: 1.4rem;
-
-    color: #ffffff;
-}}
-
-
-/* =========================================================
-   EMPTY STATE
-   ========================================================= */
-
-.twilight-empty {{
-    text-align: center;
-
-    padding: 40px;
-
-    background: rgba(10, 15, 12, 0.78);
-
-    border: 1px solid rgba(255, 255, 255, 0.18);
-
-    border-radius: 10px;
-
-    color: #d0d8d2;
-
-    font-family: Georgia, serif;
-
-    font-style: italic;
-
-    backdrop-filter: blur(6px);
-}}
-/* =========================================================
-   AUDIO PLAYER
-   ========================================================= */
-
-[data-testid="stAudio"] {{
-    margin-top: -11px;
-    margin-bottom: 24px;
-}}
-
-
-/* Audio player itself */
-
-[data-testid="stAudio"] audio {{
-    width: 100%;
-
-    border-radius: 0 0 12px 12px;
-
-    background: rgba(8, 15, 14, 0.82);
-}}
-
-.chapter-card-recorded {{
-    margin-bottom: 0;
-
-    padding-bottom: 16px;
-
-    border-radius: 12px 12px 0 0;
-
-    border-bottom: none;
-}}
-
-
-[data-testid="stAudio"] {{
-    margin-top: -1px;
-    margin-bottom: 48px;
-}}
-
-
-[data-testid="stAudio"] audio {{
-    width: 100%;
-
-    border-radius: 0 0 12px 12px;
-}}
-/* =========================================================
-   AUDIO PLAYER
-   ========================================================= */
-
-[data-testid="stAudio"] {{
-    margin-bottom: 25px;
-}}
-
-</style>
-""",
+        </style>
+        """,
         unsafe_allow_html=True,
     )

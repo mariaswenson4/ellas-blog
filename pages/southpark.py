@@ -1,16 +1,33 @@
+
+import base64
+import html
+import textwrap
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
-import base64
-from pathlib import Path 
 
+from utils.styling.components.headers import (
+    render_page_header,
+    render_section_header,
+)
+from utils.styling.components.html import render_html
+from utils.styling.headers import apply_header_styles
 from utils.styling.southpark import apply_southpark_styles
+from utils.styling.backgroundhelper import render_background
 
 
 # =============================================================================
 # PAGE STYLING
 # =============================================================================
 
+apply_header_styles()
 apply_southpark_styles()
+
+render_background(
+    image_name="southparkbackground.jpg",
+    overlay=0.2,
+)
 
 
 # =============================================================================
@@ -28,15 +45,48 @@ SHEET_URL = (
 
 @st.cache_data(ttl=10)
 def load_episodes():
+    """Load episode rankings from Google Sheets."""
     return pd.read_csv(SHEET_URL)
 
 
 # =============================================================================
-# RATING COLOR
+# HELPERS
 # =============================================================================
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+def safe_text(value, fallback="—"):
+    """Escape text so it displays safely inside HTML."""
+
+    if value is None:
+        return html.escape(fallback)
+
+    if pd.isna(value) or str(value).strip() == "":
+        return html.escape(fallback)
+
+    return html.escape(str(value))
+
+
+def render_html(content):
+    """Render HTML without Markdown interpreting indentation as code."""
+
+    cleaned_html = textwrap.dedent(content).strip()
+
+    # Remove leading indentation from every line.
+    cleaned_html = "\n".join(
+        line.lstrip()
+        for line in cleaned_html.splitlines()
+    )
+
+    st.markdown(
+        cleaned_html,
+        unsafe_allow_html=True,
+    )
+
+
 def get_character_image(character):
-    """Return a character image as a base64 data URI."""
+    """Find a character image and convert it to a base64 data URI."""
 
     filename = (
         str(character)
@@ -46,87 +96,104 @@ def get_character_image(character):
         .replace(".", "")
     )
 
-    project_root = Path(__file__).resolve().parent.parent
-
-    path = (
-        project_root
+    image_path = (
+        PROJECT_ROOT
         / "images"
         / "characters"
         / f"{filename}.png"
     )
 
-    if not path.exists():
+    if not image_path.is_file():
         return None
 
     encoded = base64.b64encode(
-        path.read_bytes()
+        image_path.read_bytes()
     ).decode("utf-8")
 
     return f"data:image/png;base64,{encoded}"
 
+
 def get_rating_color(rating):
-    """Create a smooth dark-red to bright-green rating gradient."""
+    """Create a dark-red to yellow to bright-green rating gradient."""
 
     if pd.isna(rating):
         return "#777777"
 
     rating = max(1, min(10, float(rating)))
 
-    # Dark red -> yellow
     if rating <= 5.5:
         progress = (rating - 1) / 4.5
-
         start = (125, 0, 0)
         end = (245, 190, 0)
-
-    # Yellow -> bright green
     else:
         progress = (rating - 5.5) / 4.5
-
         start = (245, 190, 0)
         end = (0, 200, 83)
 
-    red = int(
-        start[0] + (end[0] - start[0]) * progress
+    rgb = [
+        int(start[i] + (end[i] - start[i]) * progress)
+        for i in range(3)
+    ]
+
+    return f"rgb({rgb[0]}, {rgb[1]}, {rgb[2]})"
+
+
+def rating_badge(rating, detail=False):
+    """Generate a rating badge for the episode list or detail page."""
+
+    if pd.isna(rating):
+        return '<div class="rating-badge rating-unrated">—</div>'
+
+    color = get_rating_color(rating)
+    detail_class = " detail-rating-badge" if detail else ""
+
+    return (
+        f'<div class="rating-badge{detail_class}" '
+        f'style="background-color: {color};">'
+        f'{float(rating):g}'
+        f'</div>'
     )
 
-    green = int(
-        start[1] + (end[1] - start[1]) * progress
+
+def render_stat_card(label, value, subtitle=""):
+    """Render a reusable statistics card."""
+
+    subtitle_html = (
+        f'<div class="stat-small">{safe_text(subtitle)}</div>'
+        if subtitle
+        else ""
     )
 
-    blue = int(
-        start[2] + (end[2] - start[2]) * progress
+    render_html(
+        f"""
+        <div class="stat-card">
+            <div class="stat-label">{safe_text(label)}</div>
+            <div class="stat-number">{safe_text(value)}</div>
+            {subtitle_html}
+        </div>
+        """
     )
-
-    return f"rgb({red}, {green}, {blue})"
 
 
 # =============================================================================
-# LOAD + CLEAN DATA
+# LOAD AND CLEAN DATA
 # =============================================================================
 
 episodes = load_episodes()
+
 episodes.columns = episodes.columns.str.strip()
-episodes["Season"] = pd.to_numeric(
-    episodes["Season"],
-    errors="coerce",
-)
 
-episodes["Episode"] = pd.to_numeric(
-    episodes["Episode"],
-    errors="coerce",
-)
+for column in ["Season", "Episode", "Rating"]:
+    episodes[column] = pd.to_numeric(
+        episodes[column],
+        errors="coerce",
+    )
 
-episodes["Rating"] = pd.to_numeric(
-    episodes["Rating"],
-    errors="coerce",
+episodes = (
+    episodes
+    .dropna(subset=["Season", "Episode", "Title"])
+    .reset_index(drop=True)
 )
-
-episodes = episodes.dropna(
-    subset=["Season", "Episode", "Title"]
-)
-
-episodes = episodes.reset_index(drop=True)
 
 
 # =============================================================================
@@ -136,6 +203,13 @@ episodes = episodes.reset_index(drop=True)
 if "selection" not in st.session_state:
     st.session_state.selection = None
 
+# Reset selection if the spreadsheet changes.
+if (
+    st.session_state.selection is not None
+    and not 0 <= st.session_state.selection < len(episodes)
+):
+    st.session_state.selection = None
+
 
 # =============================================================================
 # EPISODE DETAIL PAGE
@@ -143,139 +217,84 @@ if "selection" not in st.session_state:
 
 if st.session_state.selection is not None:
 
-    episode = episodes.iloc[
-        st.session_state.selection
-    ]
+    episode = episodes.iloc[st.session_state.selection]
 
-    # -------------------------------------------------------------------------
-    # Back Button
-    # -------------------------------------------------------------------------
-
+    # Back button
     if st.button("← Back to episodes"):
         st.session_state.selection = None
         st.rerun()
 
-    # -------------------------------------------------------------------------
-    # Values
-    # -------------------------------------------------------------------------
+    # Episode information
+    season = int(episode["Season"])
+    number = int(episode["Episode"])
+    title = safe_text(episode["Title"])
 
-    rating = episode["Rating"]
-
-    favorite_character = episode.get(
-        "Favorite Character",
-        "",
+    favorite = safe_text(
+        episode.get("Favorite Character")
     )
 
-    comments = episode.get(
-        "Comments",
-        "",
+    rewatch = safe_text(
+        episode.get("Would I Rewatch?")
     )
 
-    rewatch = episode.get(
-        "Would I Rewatch?",
-        "",
+    comments = safe_text(
+        episode.get("Comments"),
+        fallback="Nothing to give yet!",
     )
 
-    if pd.isna(favorite_character):
-        favorite_character = "—"
-
-    if pd.isna(comments):
-        comments = "Nothing to give yet!"
-
-    if pd.isna(rewatch):
-        rewatch = "—"
-
-    # -------------------------------------------------------------------------
-    # Rating
-    # -------------------------------------------------------------------------
-
-    if pd.isna(rating):
-
-        detail_rating = """
-<div class="rating-badge rating-unrated">
-    —
-</div>
-"""
-
-    else:
-
-        rating_color = get_rating_color(rating)
-
-        detail_rating = f"""
-<div
-    class="rating-badge detail-rating-badge"
-    style="background-color: {rating_color};"
->
-    {rating:g}
-</div>
-"""
-
-    # -------------------------------------------------------------------------
-    # Episode Card
-    # -------------------------------------------------------------------------
-
-    st.markdown(
+    # Episode detail card
+    render_html(
         f"""
-<div class="episode-detail-card">
+        <div class="episode-detail-card">
 
-<div class="episode-label">
-    SEASON {int(episode["Season"])} • EPISODE {int(episode["Episode"])}
-</div>
+            <div class="episode-label">
+                SEASON {season} • EPISODE {number}
+            </div>
 
-<div class="episode-detail-title">
-    {episode["Title"]}
-</div>
+            <div class="episode-detail-title">
+                {title}
+            </div>
 
-<div class="detail-rating-wrapper">
-    {detail_rating}
-</div>
+            <div class="detail-rating-wrapper">
+                {rating_badge(episode["Rating"], detail=True)}
+            </div>
 
-<div class="episode-info">
-    <strong>Favorite Character:</strong>
-    {favorite_character}
-</div>
+            <div class="episode-info">
+                <strong>Favorite Character:</strong> {favorite}
+            </div>
 
-<div class="episode-info">
-    <strong>Would I Rewatch?</strong>
-    {rewatch}
-</div>
+            <div class="episode-info">
+                <strong>Would I Rewatch?</strong> {rewatch}
+            </div>
 
-<div class="episode-comments-title">
-    MY THOUGHTS
-</div>
+            <div class="episode-comments-title">
+                MY THOUGHTS
+            </div>
 
-<div class="episode-comments">
-    {comments}
-</div>
+            <div class="episode-comments">{comments}</div>
 
-</div>
-""",
-        unsafe_allow_html=True,
+        </div>
+        """
     )
 
 
 # =============================================================================
-# SEASON / EPISODE BROWSER
+# EPISODE BROWSER
 # =============================================================================
 
 else:
 
     # -------------------------------------------------------------------------
-    # Header
+    # Page Header
     # -------------------------------------------------------------------------
 
-    st.markdown(
-        """
-<div class="southpark-title">
-    South Park Episode Rankings
-</div>
-
-<div class="southpark-subtitle">
-    Rating all of the episodes for my super sexy girlfriend,
-    so that she also knows that I am paying attention and love her.
-</div>
-""",
-        unsafe_allow_html=True,
+    render_page_header(
+        title="South Park Episode Rankings",
+        subtitle=(
+            "Rating all of the episodes for my super sexy girlfriend, "
+            "so that she also knows that I am paying attention and love her."
+        ),
+        theme="southpark",
     )
 
     # -------------------------------------------------------------------------
@@ -289,10 +308,18 @@ else:
         .unique()
     )
 
+    if not seasons:
+        st.info("No episodes found in the spreadsheet.")
+        st.stop()
+
     selected_season = st.selectbox(
         "Choose a season",
         seasons,
         format_func=lambda season: f"Season {season}",
+    )
+
+    render_html(
+        f'<div class="season-heading">SEASON {selected_season}</div>'
     )
 
     # -------------------------------------------------------------------------
@@ -304,47 +331,21 @@ else:
     ]
 
     # -------------------------------------------------------------------------
-    # Season Heading
-    # -------------------------------------------------------------------------
-
-    st.markdown(
-        f"""
-<div class="season-heading">
-    SEASON {selected_season}
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-    # -------------------------------------------------------------------------
     # Episode List
     # -------------------------------------------------------------------------
 
     for index, episode in season_episodes.iterrows():
 
-        episode_number = int(
-            episode["Episode"]
-        )
-
-        title = str(
-            episode["Title"]
-        ).replace('"', "")
-
+        episode_number = int(episode["Episode"])
+        title = str(episode["Title"])
         rating = episode["Rating"]
-
-        # ---------------------------------------------------------------------
-        # Columns
-        # ---------------------------------------------------------------------
 
         episode_col, rating_col = st.columns(
             [5, 1],
             vertical_alignment="center",
         )
 
-        # ---------------------------------------------------------------------
         # Episode Button
-        # ---------------------------------------------------------------------
-
         with episode_col:
 
             clicked = st.button(
@@ -353,69 +354,33 @@ else:
                 use_container_width=True,
             )
 
-        # ---------------------------------------------------------------------
         # Rating Badge
-        # ---------------------------------------------------------------------
-
         with rating_col:
 
-            if pd.isna(rating):
+            render_html(
+                f"""
+                <div class="rating-wrapper">
+                    {rating_badge(rating)}
+                </div>
+                """
+            )
 
-                st.markdown(
-                    """
-<div class="rating-wrapper">
-    <div class="rating-badge rating-unrated">
-        —
-    </div>
-</div>
-""",
-                    unsafe_allow_html=True,
-                )
-
-            else:
-
-                rating_color = get_rating_color(
-                    rating
-                )
-
-                st.markdown(
-                    f"""
-<div class="rating-wrapper">
-    <div
-        class="rating-badge"
-        style="background-color: {rating_color};"
-    >
-        {rating:g}
-    </div>
-</div>
-""",
-                    unsafe_allow_html=True,
-                )
-
-        # ---------------------------------------------------------------------
         # Open Episode
-        # ---------------------------------------------------------------------
-
         if clicked:
             st.session_state.selection = index
             st.rerun()
 
-            # =========================================================================
+    # =========================================================================
     # STATS
     # =========================================================================
 
-    st.markdown(
-        """
-<div class="stats-heading">
-    STATS
-</div>
-""",
-        unsafe_allow_html=True,
+    render_section_header(
+        title="STATS",
+        theme="southpark",
     )
 
-
     # -------------------------------------------------------------------------
-    # Watched Episodes
+    # Episodes Watched
     # -------------------------------------------------------------------------
 
     watched = (
@@ -426,7 +391,7 @@ else:
         .isin(["TRUE", "YES", "1"])
     )
 
-    watched_count = watched.sum()
+    watched_count = int(watched.sum())
     total_episodes = len(episodes)
 
     watched_percent = (
@@ -435,19 +400,17 @@ else:
         else 0
     )
 
-
     # -------------------------------------------------------------------------
     # Average Rating
     # -------------------------------------------------------------------------
 
     rated_episodes = episodes["Rating"].dropna()
 
-    if len(rated_episodes) > 0:
-        average_rating = rated_episodes.mean()
-        average_display = f"{average_rating:.1f}/10"
-    else:
-        average_display = "—"
-
+    average_display = (
+        f"{rated_episodes.mean():.1f}/10"
+        if not rated_episodes.empty
+        else "—"
+    )
 
     # -------------------------------------------------------------------------
     # Stat Cards
@@ -456,37 +419,21 @@ else:
     stat1, stat2 = st.columns(2)
 
     with stat1:
-        st.markdown(
-            f"""
-<div class="stat-card">
-    <div class="stat-label">EPISODES WATCHED</div>
-    <div class="stat-number">
-        {watched_count} / {total_episodes}
-    </div>
-    <div class="stat-small">
-        {watched_percent:.1f}% complete
-    </div>
-</div>
-""",
-            unsafe_allow_html=True,
+        render_stat_card(
+            label="EPISODES WATCHED",
+            value=f"{watched_count} / {total_episodes}",
+            subtitle=f"{watched_percent:.1f}% complete",
         )
 
     with stat2:
-        st.markdown(
-            f"""
-<div class="stat-card">
-    <div class="stat-label">AVERAGE RATING</div>
-    <div class="stat-number">
-        {average_display}
-    </div>
-</div>
-""",
-            unsafe_allow_html=True,
+        render_stat_card(
+            label="AVERAGE RATING",
+            value=average_display,
         )
 
-    # -------------------------------------------------------------------------
-    # Favorite Character Counts
-    # -------------------------------------------------------------------------
+    # =========================================================================
+    # FAVORITE CHARACTERS
+    # =========================================================================
 
     favorite_characters = (
         episodes["Favorite Character"]
@@ -505,27 +452,27 @@ else:
         .head(10)
     )
 
-
-    st.markdown(
-        """
-<div class="character-heading">
-    FAVORITE CHARACTERS
-</div>
-""",
-        unsafe_allow_html=True,
+    render_html(
+        '<div class="character-heading">FAVORITE CHARACTERS</div>'
     )
 
+    # -------------------------------------------------------------------------
+    # No Character Data
+    # -------------------------------------------------------------------------
 
     if character_counts.empty:
 
-        st.markdown(
+        render_html(
             """
-<div class="no-stats">
-    No favorite characters entered yet!
-</div>
-""",
-            unsafe_allow_html=True,
+            <div class="no-stats">
+                No favorite characters entered yet!
+            </div>
+            """
         )
+
+    # -------------------------------------------------------------------------
+    # Character Rankings
+    # -------------------------------------------------------------------------
 
     else:
 
@@ -533,7 +480,7 @@ else:
 
         for character, count in character_counts.items():
 
-            image = get_character_image(character)
+            character_image = get_character_image(character)
 
             width = (
                 count / max_count * 100
@@ -541,30 +488,47 @@ else:
                 else 0
             )
 
-            if image:
+            # Character Picture
+            if character_image:
                 picture_html = (
-                    f'<img src="{image}" '
-                    f'class="character-image">'
+                    f'<img src="{character_image}" '
+                    f'class="character-image" alt="">'
                 )
             else:
                 picture_html = (
                     '<div class="character-placeholder">?</div>'
                 )
 
+            # Character Card
             character_html = f"""
 <div class="character-row">
-<div class="character-picture">{picture_html}</div>
-<div class="character-content">
-<div class="character-name">{character}</div>
-<div class="character-bar-area">
-<div class="character-bar" style="width: {width}%;"></div>
-<div class="character-count">{count}</div>
-</div>
-</div>
+
+    <div class="character-picture">
+        {picture_html}
+    </div>
+
+    <div class="character-content">
+
+        <div class="character-name">
+            {safe_text(character)}
+        </div>
+
+        <div class="character-bar-area">
+
+            <div
+                class="character-bar"
+                style="width: {width}%;"
+            ></div>
+
+            <div class="character-count">
+                {count}
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 """
 
-            st.markdown(
-                character_html,
-                unsafe_allow_html=True,
-            )
+            render_html(character_html)
