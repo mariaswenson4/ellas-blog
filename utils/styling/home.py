@@ -53,7 +53,7 @@ def apply_home_styles():
     background_path = (
         project_root
         / "images"
-        / "homebackground.png"
+        / "homebackground.jpg"
     )
 
     background = _image_to_base64(

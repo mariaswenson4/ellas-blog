@@ -22,6 +22,7 @@ pages = {
         st.Page("pages/twilight.py", title="Twilight Audiobook"),
         st.Page("pages/blog.py", title="Blog"),
         st.Page("pages/movies.py", title="Movies"),
+        st.Page("pages/BINGO.py", title="BINGO Tracker"),
     ],
 }
 

@@ -23,7 +23,7 @@ from utils.styling.components.html import render_html
 apply_header_styles()
 apply_movies_styles()
 render_background(
-    image_name="moviesbackground.png",
+    image_name="moviesbackground.jpg",
     overlay=0.12,
 )
 st.markdown(
