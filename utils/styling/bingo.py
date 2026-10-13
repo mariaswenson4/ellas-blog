@@ -256,6 +256,58 @@ def apply_bingo_styles():
     }
 }
 
+/* =========================================================
+   BINGO STATISTICS CARD
+   ========================================================= */
+
+.st-key-bingo_stats_card {
+    background: rgba(14, 20, 19, 0.93) !important;
+    border: 1px solid rgba(255,255,255,0.17) !important;
+    border-left: 3px solid #D99532 !important;
+    border-radius: 14px !important;
+    padding: 26px !important;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.35);
+}
+
+.st-key-bingo_stats_card h3 {
+    font-family: Georgia, serif !important;
+    font-size: 1.7rem !important;
+    color: #FFF4E8 !important;
+}
+
+.st-key-bingo_stats_card h4 {
+    font-family: Georgia, serif !important;
+    color: #FFF4E8 !important;
+}
+
+/* Metric cards */
+
+.st-key-bingo_stats_card [data-testid="stMetric"] {
+    background: rgba(217,149,50,0.08);
+    border: 1px solid rgba(217,149,50,0.25);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+}
+
+.st-key-bingo_stats_card [data-testid="stMetricValue"] {
+    color: #D99532 !important;
+    font-family: Georgia, serif;
+    font-size: 2.4rem !important;
+}
+
+.st-key-bingo_stats_card [data-testid="stMetricLabel"] {
+    color: #E8D6C0 !important;
+}
+
+@media (max-width: 640px) {
+    .st-key-bingo_stats_card {
+        padding: 18px !important;
+    }
+}
+
+
 </style>
         """,
         unsafe_allow_html=True
