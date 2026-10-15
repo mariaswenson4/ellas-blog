@@ -238,7 +238,7 @@ if st.session_state.selection is not None:
     )
 
     comments = safe_text(
-        episode.get("Comments"),
+        episode.get("My Thoughts"),
         fallback="Nothing to give yet!",
     )
 
